@@ -48,6 +48,12 @@ $(document).ready(function() {
 	$('.xannotate-widget').toggle();
     });
 
+    $(document).on('click', '.annotation-tooltip', function(e) {
+	var anno_id = $(this).data('anno-id');
+	if (anno_id) {
+	    alert(anno_id);
+	}
+    });
 
     $('.xannotate-widget .xannotate-source').focus(function(e) {
 	$('.xannotate-target').removeClass('selected');
