@@ -15,9 +15,56 @@
  * getAnnotationInEndpoint(oaAnnotation)
  */
 
-var pragma_url;
+var pragma_url, Annotation;
 (function($){
     pragma_url = 'http://pragma.archivelab.org:8080/annotations'; //'https://pragma.archivelab.org/annotations';
+    Annotation = {
+	get: function(annotation_id, successCallback) {
+            jQuery.ajax({
+                url: annotation_id,
+                type: 'GET',
+                dataType: 'json',
+                contentType: "application/json; charset=utf-8",
+                success: function(data) {
+                    var annotation = data.annotation;
+                    if (typeof successCallback === "function") {
+                        successCallback(annotation);
+                    }
+		}
+	    });
+	},
+	update: function(oaAnnotation, successCallback, errorCallback) {
+	    var annotation = jQuery.extend({}, oaAnnotation);
+	    if(annotation.on.length) {
+		annotation.on = annotation.on[0];
+	    }
+	    if (annotation.endpoint) {
+		delete annotation.endpoint;
+	    }
+
+	    jQuery.ajax({
+		url: pragma_url,
+                type: 'POST',
+                dataType: 'json',
+                headers: { },
+		data: JSON.stringify(annotation),
+                processData: false,
+                contentType: "application/json; charset=utf-8",
+                success: function(data) {
+                    var annotation = data.annotation;
+		    if (typeof successCallback === "function") {
+			successCallback(annotation)
+		    }
+		},
+		error: function() {
+		    if (typeof errorCallback === "function") {
+			errorCallback();
+		    }
+		}
+	    });
+	}
+    }
+
 
     $.PragmaEndpoint = function(options) {
 
@@ -40,8 +87,6 @@ var pragma_url;
         search: function(options, successCallback, errorCallback) {
             var _this = this;
 
-            console.log(options);
-
             //use options.uri
             jQuery.ajax({
                 url: pragma_url + '?canvas_id=' +  options.uri,
@@ -62,8 +107,6 @@ var pragma_url;
 			if (!value.annotation['@id']) {
 			    value.annotation['@id'] = $.genUUID();
 			}
-
-			console.log(value.annotation);
 
 			_this.annotationsList.push(value.annotation);
                     });
@@ -107,33 +150,14 @@ var pragma_url;
 
         //Update an annotation given the OA version
         update: function(oaAnnotation, successCallback, errorCallback) {
-	    var _this = this
-            //var annotation = this.getAnnotationInEndpoint(oaAnnotation);
-	    var annotation = jQuery.extend({}, oaAnnotation);
-            annotation.on = oaAnnotation.on[0];
-	    annotation.endpoint = undefined;
-	    jQuery.ajax({
-                url: pragma_url,
-                type: 'POST',
-                dataType: 'json',
-                headers: { },
-		data: JSON.stringify(annotation),
-                processData: false,
-                contentType: "application/json; charset=utf-8",
-                success: function(data) {
-                    var annotation = data.annotation;
-                    annotation.endpoint = _this;
-                    if (typeof successCallback === "function") {
-                        successCallback(_this.getAnnotationInOA(annotation));
-                    }
-                },
-                error: function() {
-                    console.log("wreck yourself");
-                    if (typeof errorCallback === "function") {
-                        errorCallback();
-                    }
+	    var _this = this;
+
+	    Annotation.update(oaAnnotation, function(annotation) {
+                if (typeof successCallback === "function") {
+		    annotation.endpoint = _this;
+                    successCallback(_this.getAnnotationInOA(annotation));
                 }
-            });
+	    }, errorCallback);
 
         },
 
@@ -158,7 +182,6 @@ var pragma_url;
                     }
                 },
                 error: function() {
-                    console.log("wreck yourself");
                     if (typeof errorCallback === "function") {
                         errorCallback();
                     }
