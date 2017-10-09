@@ -17,7 +17,7 @@
 
 var pragma_url, Annotation;
 (function($){
-    pragma_url = 'http://pragma.archivelab.org:8080/annotations'; //'https://pragma.archivelab.org/annotations';
+    pragma_url = 'https://pragma.archivelab.org/annotations';
     Annotation = {
 	get: function(annotation_id, successCallback) {
             jQuery.ajax({
